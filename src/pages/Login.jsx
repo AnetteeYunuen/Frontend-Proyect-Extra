@@ -13,28 +13,22 @@ export default function Login() {
     e.preventDefault()
     setError(null)
     try {
-      // Producción: await login(email, password)  // ← esto llamará a tu AUTH
-      await login(email, password) // demo
+      await login(email, password)        // ← si falla, lanza error y NO navega
       navigate('/app')
-    } catch {
-      setError('No se pudo iniciar sesión')
+    } catch (err) {
+      setError('Credenciales inválidas')
     }
   }
 
   return (
-    <div style={{maxWidth: 400, margin: '40px auto'}}>
+    <div style={{maxWidth: 400, margin:'40px auto'}}>
       <h2>Iniciar sesión</h2>
-      <form onSubmit={onSubmit} style={{display: 'grid', gap: 8}}>
-        <input type="email" placeholder="Email" value={email}
-               onChange={(e)=>setEmail(e.target.value)} required />
-        <input type="password" placeholder="Contraseña" value={password}
-               onChange={(e)=>setPassword(e.target.value)} required />
+      <form onSubmit={onSubmit} style={{display:'grid', gap:8}}>
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" required />
+        <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Contraseña" required />
         <button type="submit">Entrar</button>
       </form>
-      {error && <p style={{color: 'red'}}>{error}</p>}
-      <p style={{fontSize: 12, marginTop: 8}}>
-        Luego esto llamará a tu API de auth en Mongo Atlas y guardará un JWT.
-      </p>
+      {error && <p style={{color:'red', marginTop:8}}>{error}</p>}
     </div>
   )
 }
