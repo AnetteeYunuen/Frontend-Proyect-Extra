@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const isAuthenticated = !!token
 
-  // Limpia un token viejo tipo "dev-token"
+  // Limpia un token 
   useEffect(() => {
     if (token === 'dev-token') {
       localStorage.removeItem('token')
@@ -16,7 +16,6 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function login(email, password) {
-    // ⚠️ OBLIGA a fallar si la API no responde OK
     const url = `${import.meta.env.VITE_AUTH_API_URL}/auth/login`
     const res = await fetch(url, {
       method: 'POST',
@@ -24,7 +23,6 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, password })
     })
     if (!res.ok) {
-      // 401 u otro -> no guardar token
       const txt = await res.text().catch(() => '')
       throw new Error(`Login failed (${res.status}) ${txt}`)
     }

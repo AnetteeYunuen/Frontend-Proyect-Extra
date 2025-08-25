@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -10,7 +9,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Asegura que no haya "/" al final
   const baseUrl = (import.meta.env.VITE_DATA_API_URL || '').replace(/\/+$/, '')
 
   useEffect(() => {
@@ -21,7 +19,7 @@ export default function Dashboard() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`${baseUrl}/movies?limit=10&page=1`, {
+        const res = await fetch(`${baseUrl}/movies?limit=20&page=1`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: ac.signal
         })
