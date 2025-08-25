@@ -1,43 +1,69 @@
+// src/pages/Dashboard.jsx
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Dashboard() {
   const { token } = useAuth()
-  const [data, setData] = useState({ items: [], total: 0, page: 1, limit: 20 })
+
+  const [items, setItems] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  // Asegura que no haya "/" al final
+  const baseUrl = (import.meta.env.VITE_DATA_API_URL || '').replace(/\/+$/, '')
+
   useEffect(() => {
-    async function load() {
+    if (!token || !baseUrl) return
+    const ac = new AbortController()
+
+    ;(async () => {
+      setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`${import.meta.env.VITE_DATA_API_URL}/movies?limit=10&page=1`, {
-          headers: { Authorization: `Bearer ${token}` }
+        const res = await fetch(`${baseUrl}/movies?limit=10&page=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: ac.signal
         })
-        if (!res.ok) throw new Error(`Error ${res.status}`)
-        const json = await res.json()
-        setData(json)
+        if (!res.ok) {
+          const msg = await res.text().catch(() => '')
+          throw new Error(`Error ${res.status} ${msg}`)
+        }
+        const data = await res.json()
+        setItems(data.items || [])
+        setTotal(data.total ?? 0)
       } catch (e) {
-        setError('No se pudo cargar películas')
+        if (!ac.signal.aborted) {
+          console.error('Error /movies:', e)
+          setError('No se pudo cargar películas')
+        }
+      } finally {
+        setLoading(false)
       }
-    }
-    if (token) load()
-  }, [token])
+    })()
 
+    return () => ac.abort()
+  }, [token, baseUrl])
+
+  if (!baseUrl) return <p style={{color:'red'}}>Falta VITE_DATA_API_URL en el build.</p>
+  if (!token) return <p>Inicia sesión…</p>
+  if (loading) return <p>Cargando…</p>
   if (error) return <p style={{color:'red'}}>{error}</p>
-  if (!data.items.length) return <p>Cargando...</p>
+  if (!items.length) return <p>Sin resultados.</p>
 
   return (
     <div style={{padding:16}}>
       <h2>Películas</h2>
       <ul>
-        {data.items.map(m => (
-          <li key={m._id}>
-            <strong>{m.title || m.name}</strong> {m.year ? `(${m.year})` : ''}
-            {m.genres && Array.isArray(m.genres) ? ` — ${m.genres.join(', ')}` : ''}
+        {items.map(m => (
+          <li key={m._id || m.id}>
+            <strong>{m.title || m.name || '(sin título)'}</strong>
+            {m.year ? ` (${m.year})` : ''}
+            {Array.isArray(m.genres) && m.genres.length ? ` — ${m.genres.join(', ')}` : ''}
           </li>
         ))}
       </ul>
-      <p>Total: {data.total}</p>
+      <p>Total: {total}</p>
     </div>
   )
 }
